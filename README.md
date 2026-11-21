@@ -25,7 +25,6 @@
       <tr>
         <td style="border:2px double #000080;">branch \ workflow</td>
         <td style="border:2px double #000080;">Build</td>
-        <td style="border:2px double #000080;">Archive</td>
         <td style="border:2px double #000080;">Upload</td>
       </tr>
       <tr>
@@ -33,11 +32,6 @@
         <td style="border:2px double #000080;text-align:center;">
           <a href="https://github.com/shilokuma-inc/idfa-vault-ios/actions/workflows/build.yml?query=branch%3Amain">
             <img src="https://github.com/shilokuma-inc/idfa-vault-ios/actions/workflows/build.yml/badge.svg?branch=main" alt="Build">
-          </a>
-        </td>
-        <td style="border:2px double #000080;text-align:center;">
-          <a href="https://github.com/shilokuma-inc/idfa-vault-ios/actions/workflows/archive.yml?query=branch%3Amain">
-            <img src="https://github.com/shilokuma-inc/idfa-vault-ios/actions/workflows/archive.yml/badge.svg?branch=main" alt="Archive">
           </a>
         </td>
         <td style="border:2px double #000080;text-align:center;">
@@ -49,8 +43,6 @@
           <a href="https://github.com/shilokuma-inc/idfa-vault-ios/actions/workflows/build.yml?query=branch%3Adevelop">
             <img src="https://github.com/shilokuma-inc/idfa-vault-ios/actions/workflows/build.yml/badge.svg?branch=develop" alt="Build">
           </a>
-        </td>
-        <td style="border:2px double #000080;text-align:center;">
         </td>
         <td style="border:2px double #000080;text-align:center;">
           <a href="https://github.com/shilokuma-inc/idfa-vault-ios/actions/workflows/upload.yml?query=branch%3Adevelop">
@@ -143,24 +135,25 @@ Upload ワークフローは、アップロードの前に TestFlight の内部�
 
 ### 6. ブランチ運用と CI
 
-| ブランチ | Build（ビルド + テスト + SwiftLint） | Archive（IPA / pkg の Export） | Upload（App Store Connect） |
-|---|:-:|:-:|:-:|
-| `main` | ✅ | ✅ | |
-| `develop` | ✅ | | ✅ |
-| `release/**` | ✅ | | ✅ |
-| その他の作業ブランチ | ✅（Unit テストのみ） | | |
-| Pull Request の作成時（opened / reopened / ready_for_review） | ✅ | | |
-| Fork からの Pull Request | ✅ | | |
+| ブランチ | Build（ビルド + テスト + SwiftLint） | Upload（Archive → Export → App Store Connect） |
+|---|:-:|:-:|
+| `main` | ✅ | |
+| `develop` | ✅ | ✅ |
+| `release/**` | ✅ | ✅ |
+| その他の作業ブランチ | ✅（Unit テストのみ） | |
+| Pull Request の作成時（opened / reopened / ready_for_review） | ✅ | |
+| Fork からの Pull Request | ✅ | |
 
 - Build は 1 つのジョブで iOS・macOS・visionOS を順にビルドします。UI テストを流すときは iOS Simulator でテストし、macOS と visionOS Simulator はビルドだけ確かめます。作業ブランチでは iOS もビルドだけにし、Unit テストを macOS で流します（Simulator の起動を待たないため）
 - Archive / Upload は iOS → macOS → visionOS の順に 1 つずつ流します（macOS ランナーの同時実行枠を 1 つしか使わないため）。iOS・visionOS は IPA、macOS は pkg を Export します。前のプラットフォームが失敗しても次は流します
-- Upload は Archive → Export を含むため、`develop` / `release/**` では Archive を別途実行しません
+- `main` への push では Build だけを実行します。`main` には `develop` / `release/**` で Upload（Archive を含む）を通したものがマージされるためです
+- Archive（Export まで。アップロードはしない）は手動実行だけです。Actions タブの Run workflow から、確かめたいブランチを選んで実行します
 - Upload はブランチをまたいで 1 本ずつ流します。`develop` と `release/**` に続けてマージしても、後の Upload は先の Upload が終わってから始まります。ビルド番号は Xcode が App Store Connect の最新ビルドを見て決めるため、並べて流すと同じ番号を選び、片方のアップロードが失敗します
 - 順番を待っている Upload（状態は pending）は取り消さず、待ち始めた順に流します。同じブランチに続けて push したときも、push ごとに上げます（待てるのは 100 本まで）
-- Archive / Upload は Actions タブから手動でも実行できます（Run workflow）。作業ブランチを TestFlight で確認したいときは、Upload を手動実行してそのブランチを選びます
+- Upload も手動で実行できます。作業ブランチを TestFlight で確認したいときは、Upload を手動実行してそのブランチを選びます
 - リポジトリ変数（Settings → Secrets and variables → Actions → Variables）に `ENABLE_DELIVERY=false` を設定すると Upload をスキップします（Archive は App Store Connect にアプリが無くても通るため止めません）。テンプレートリポジトリ自身はこの設定でアップロードを止めています。テンプレートから作成したリポジトリには引き継がれないため、何もしなければ従来どおり実行されます
 - macOS・visionOS だけを止めたいときは、リポジトリ変数 `ENABLE_MACOS_DELIVERY=false` / `ENABLE_VISIONOS_DELIVERY=false` を設定します（Archive・Upload の両方で飛ばします）
-- ドキュメントだけの変更（`**/*.md`、`docs/**`）では Build を実行しません。Upload（`develop` / `release/**` への push）と Archive（`main` への push）は、ドキュメントだけの変更でも実行します
+- ドキュメントだけの変更（`**/*.md`、`docs/**`）では Build を実行しません。Upload（`develop` / `release/**` への push）は、ドキュメントだけの変更でも実行します
 - 作業ブランチへの push では、時間のかかる UI テスト（`<プロジェクト名>UITests`）を省いて Unit テストだけ実行します。UI テストは Pull Request の作成時と `main` / `develop` / `release/**` への push で実行します。Fork からの Pull Request は push で実行されないため、更新（synchronize）を含むすべてのイベントで UI テストまで実行します
 - Xcode のバージョンは [.github/workflows/_build.yml](.github/workflows/_build.yml) と [.github/workflows/_archive.yml](.github/workflows/_archive.yml) の `xcode-version` で固定しています。Environment の更新時はあわせて変更してください
 
@@ -331,7 +324,7 @@ visionOS だけ別のアイコン（`AppIcon-Vision`）を使うよう、`ASSETC
         ├── _build.yml       # 共通処理: ビルド + テスト + SwiftLint（iOS・macOS・visionOS。workflow_call）
         ├── _archive.yml     # 共通処理: Archive → Export（→ Upload）（1 回で 1 プラットフォーム。workflow_call）
         ├── build.yml        # 全ブランチの push / Fork からの PR
-        ├── archive.yml      # main の push
+        ├── archive.yml      # Archive → Export の確認（手動実行）
         ├── upload.yml       # develop / release/** の push
         ├── app-store-*.yml  # App Store の掲載情報の反映（手動実行）
         └── verify-app-store-metadata.yml  # 掲載情報の検査（PR）
