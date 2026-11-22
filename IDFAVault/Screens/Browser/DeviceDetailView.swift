@@ -59,7 +59,7 @@ struct DeviceDetailView: View {
         if case .other(let id) = selection, let device = model.devices.otherDevices.first(where: { $0.id == id }) {
             return device.name
         }
-        return model.ownDeviceName ?? ""
+        return model.ownDisplayName ?? ""
     }
 
     // MARK: - この端末
@@ -75,9 +75,9 @@ struct DeviceDetailView: View {
         } else {
             StatusBadge(title: "Not Available", color: HeatTint.sectionHeader, fontSize: 13)
         }
-        title(model.ownDeviceName ?? "")
+        title(model.ownDisplayName ?? "")
         DetailIngot(
-            deviceName: model.ownDeviceName ?? "",
+            deviceName: model.ownDisplayName ?? "",
             identifier: model.ownIdentifier,
             isMasked: false,
             metrics: metrics,

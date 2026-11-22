@@ -19,6 +19,7 @@ final class AppSettings {
         static let masksOtherDevices = "settings.masksOtherDevices"
         static let syncsThisDevice = "settings.syncsThisDevice"
         static let identifierFormat = "settings.identifierFormat"
+        static let customDeviceName = "settings.customDeviceName"
     }
 
     /// 自動ロックのタイミング（初期値: すぐに）
@@ -46,6 +47,11 @@ final class AppSettings {
         didSet { defaults.set(identifierFormat.rawValue, forKey: Key.identifierFormat) }
     }
 
+    /// この端末に付けた名前（初期値: 空 = 機種名を使う）。変えるときは AppModel.setCustomDeviceName を使う（同期のレコードを書き直すため）
+    var customDeviceName: String {
+        didSet { defaults.set(customDeviceName, forKey: Key.customDeviceName) }
+    }
+
     @ObservationIgnored private let defaults: UserDefaults
 
     init(defaults: UserDefaults) {
@@ -55,5 +61,6 @@ final class AppSettings {
         masksOtherDevices = defaults.object(forKey: Key.masksOtherDevices) as? Bool ?? true
         syncsThisDevice = defaults.object(forKey: Key.syncsThisDevice) as? Bool ?? true
         identifierFormat = defaults.string(forKey: Key.identifierFormat).flatMap(IdentifierFormat.init(rawValue:)) ?? .uppercaseHyphenated
+        customDeviceName = defaults.string(forKey: Key.customDeviceName) ?? ""
     }
 }

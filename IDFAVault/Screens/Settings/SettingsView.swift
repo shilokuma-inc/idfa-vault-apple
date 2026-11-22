@@ -110,6 +110,8 @@ struct SettingsForm: View {
                     .padding(.vertical, 11)
                     .accessibilityIdentifier("syncsThisDevice")
                     SettingsDivider()
+                    DeviceNameField()
+                    SettingsDivider()
                 }
                 Button(role: .destructive) {
                     confirmsDeletion = true
@@ -234,6 +236,59 @@ struct SettingsForm: View {
         .menuStyle(.button)
         .buttonStyle(.plain)
         .accessibilityIdentifier("copyFormat")
+    }
+}
+
+/// この端末の名前（iPhone・iPad）。同じ機種の端末を見分けられるよう、他の端末の一覧に出す名前を変える。
+/// 入力を終えたら（return・フォーカスが外れたら）保存して、同期のレコードを書き直す
+private struct DeviceNameField: View {
+    @Environment(AppModel.self) private var model
+    @State private var draft = ""
+    @FocusState private var isFocused: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            SettingLabel(title: "This Device's Name", detail: "Leave empty to use the model name")
+            TextField(text: $draft, prompt: Text(verbatim: model.ownDeviceName ?? "")) {
+                Text("This Device's Name")
+            }
+            .textFieldStyle(.plain)
+            .font(.callout)
+            .foregroundStyle(HeatTint.text)
+            .submitLabel(.done)
+            .autocorrectionDisabled()
+            .focused($isFocused)
+            .padding(.horizontal, 12)
+            .frame(minHeight: 40)
+            .background {
+                ChamferedRect(chamfer: 8)
+                    .fill(Color.black.opacity(0.28))
+                    .overlay(ChamferedRect(chamfer: 8).stroke(HeatTint.sectionHeader.opacity(0.35), lineWidth: 1))
+            }
+            .onSubmit(save)
+            .onChange(of: isFocused) { _, focused in
+                if !focused {
+                    save()
+                }
+            }
+            .onChange(of: draft) { _, text in
+                if text.count > AppModel.customDeviceNameLimit {
+                    draft = String(text.prefix(AppModel.customDeviceNameLimit))
+                }
+            }
+            .accessibilityIdentifier("deviceName")
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .onAppear {
+            draft = model.settings.customDeviceName
+        }
+        .onDisappear(perform: save)
+    }
+
+    private func save() {
+        let name = draft
+        Task { await model.setCustomDeviceName(name) }
     }
 }
 
