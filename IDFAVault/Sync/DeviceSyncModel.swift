@@ -99,6 +99,18 @@ final class DeviceSyncModel {
         try? await service.delete(deviceID: ownDeviceID)
     }
 
+    /// 他の端末のレコードを 1 台ぶん消す（手放した端末など）。その端末で同期をオンにしたままなら、次に開いたときに書き直される
+    func deleteDevice(_ device: DeviceRecord) async -> Bool {
+        do {
+            try await service.delete(deviceID: device.id)
+            otherDevices.removeAll { $0.id == device.id }
+            revealedDeviceIDs.remove(device.id)
+            return true
+        } catch {
+            return false
+        }
+    }
+
     /// 同じ Apple ID のすべての端末のレコードを消す（「iCloud の同期データをすべて削除」）
     func deleteAll() async -> Bool {
         pendingUpload = nil

@@ -15,6 +15,7 @@ struct VisionMainView: View {
     @Environment(AppModel.self) private var model
     @State private var showsSettings = ScreenshotDemo.scene == .settings
     @State private var qrDevice: DeviceRecord?
+    @State private var pendingDeletion: DeviceRecord?
 
     var body: some View {
         ScrollView {
@@ -53,6 +54,7 @@ struct VisionMainView: View {
                 QRCodeSheet(identifier: identifier, deviceName: device.name)
             }
         }
+        .confirmsDeviceDeletion($pendingDeletion)
     }
 
     private var header: some View {
@@ -129,6 +131,12 @@ struct VisionMainView: View {
                     VisionDeviceCard(device: device) {
                         qrDevice = device
                     }
+                    .contextMenuPreviewShape(ChamferedRect(chamfer: 14))
+                    .contextMenu {
+                        RemoveDeviceMenuItem {
+                            pendingDeletion = device
+                        }
+                    }
                 }
             }
         }
@@ -161,6 +169,10 @@ private struct VisionDeviceCard: View {
                             .font(.footnote)
                             .foregroundStyle(HeatTint.warning)
                             .fixedSize(horizontal: false, vertical: true)
+                    }
+                    if device.isStale(now: .now) {
+                        StaleDeviceLabel()
+                            .padding(.top, 2)
                     }
                 }
                 .frame(maxWidth: .infinity, minHeight: 46, alignment: .leading)

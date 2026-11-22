@@ -255,6 +255,11 @@ final class AppModel {
         }
     }
 
+    /// 他の端末のレコードを 1 台ぶん消す
+    func deleteDevice(_ device: DeviceRecord) async -> Bool {
+        await devices.deleteDevice(device)
+    }
+
     /// 自分の Apple ID のレコードをすべて消す。同期をオンにしている端末は、次に開いたときに書き直す
     func deleteAllSyncedData() async -> Bool {
         await devices.deleteAll()

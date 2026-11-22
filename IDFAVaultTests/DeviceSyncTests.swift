@@ -117,6 +117,60 @@ struct DeviceSyncTests {
         #expect(model.devices.otherDevices.isEmpty)
     }
 
+    /// 他の端末を 1 台だけ消すと、iCloud と一覧からその端末だけが消える
+    @Test
+    func deleteDeviceRemovesOnlyThatDevice() async throws {
+        let sync = StubDeviceSync(records: StubDeviceSync.demoDevices(now: Self.now))
+        let model = makeModel(sync: sync)
+        await model.unlock()
+        await waitUntil { model.devices.status == .synced }
+        let device = try #require(model.devices.otherDevices.first { $0.id == "demo-ipad-mini" })
+        model.devices.toggleReveal(device)
+
+        let deleted = await model.deleteDevice(device)
+
+        #expect(deleted)
+        #expect(sync.records["demo-ipad-mini"] == nil)
+        #expect(sync.records["this-device"] != nil)
+        #expect(model.devices.otherDevices.map(\.id) == ["demo-ipad", "demo-iphone-15", "demo-iphone"])
+        #expect(!model.devices.isRevealed(device))
+    }
+
+    /// 消せなかったら、一覧に残す
+    @Test
+    func deleteDeviceKeepsTheDeviceWhenItFails() async throws {
+        let sync = StubDeviceSync(records: StubDeviceSync.demoDevices(now: Self.now))
+        let model = makeModel(sync: sync)
+        await model.unlock()
+        await waitUntil { model.devices.status == .synced }
+        let device = try #require(model.devices.otherDevices.first)
+
+        sync.failsNextRequest = true
+        let deleted = await model.deleteDevice(device)
+
+        #expect(!deleted)
+        #expect(sync.records[device.id] != nil)
+        #expect(model.devices.otherDevices.contains(device))
+    }
+
+    /// 30 日以上同期していない端末に印を付ける
+    @Test(arguments: [
+        (29.9, false),
+        (30.0, true),
+        (45.0, true)
+    ])
+    func marksDevicesNotSyncedForThirtyDays(days: Double, isStale: Bool) {
+        let device = DeviceRecord(
+            id: "old",
+            name: "iPhone",
+            platform: .iOS,
+            identifier: nil,
+            trackingStatus: .denied,
+            updatedAt: Self.now.addingTimeInterval(-86_400 * days)
+        )
+        #expect(device.isStale(now: Self.now) == isStale)
+    }
+
     // MARK: - 状態
 
     @Test

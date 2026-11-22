@@ -64,4 +64,12 @@ struct DeviceRecord: Identifiable, Hashable, Sendable {
     var identifier: AdvertisingIdentifier?
     var trackingStatus: TrackingStatus
     var updatedAt: Date
+
+    /// この日数より長く同期していない端末に印を付ける（手放した端末を見つけて消せるように）
+    static let staleInterval: TimeInterval = 30 * 86_400
+
+    /// 長く同期していない（staleInterval 以上前に書かれた）か
+    func isStale(now: Date) -> Bool {
+        now.timeIntervalSince(updatedAt) >= Self.staleInterval
+    }
 }

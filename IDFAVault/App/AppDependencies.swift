@@ -368,7 +368,8 @@ final class StubDeviceSync: DeviceSyncing {
                 platform: .iPadOS,
                 identifier: nil,
                 trackingStatus: .denied,
-                updatedAt: now.addingTimeInterval(-86_400 * 3)
+                // 長く同期していない端末の印（30 日以上）を見せるため、古い日付にする
+                updatedAt: now.addingTimeInterval(-86_400 * 45)
             )
         ]
         return devices.filter { $0.name != ownName }
