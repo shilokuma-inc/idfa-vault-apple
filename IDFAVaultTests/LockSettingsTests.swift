@@ -37,14 +37,17 @@ struct LockSettingsTests {
         #expect(settings.autoLock == .immediately)
         #expect(settings.hidesWhileCapturing)
         #expect(settings.identifierFormat == .uppercaseHyphenated)
+        #expect(settings.customDeviceName.isEmpty)
 
         settings.autoLock = .afterFiveMinutes
         settings.hidesWhileCapturing = false
         settings.identifierFormat = .lowercaseHyphenated
+        settings.customDeviceName = "Test iPhone"
 
         let reloaded = AppSettings(defaults: defaults)
         #expect(reloaded.autoLock == .afterFiveMinutes)
         #expect(!reloaded.hidesWhileCapturing)
         #expect(reloaded.identifierFormat == .lowercaseHyphenated)
+        #expect(reloaded.customDeviceName == "Test iPhone")
     }
 }

@@ -171,6 +171,46 @@ struct DeviceSyncTests {
         #expect(device.isStale(now: Self.now) == isStale)
     }
 
+    // MARK: - この端末の名前
+
+    /// 名前を付けたら同期のレコードを書き直す。前後の空白は除き、長ければ切る。空にしたら機種名に戻す
+    @Test
+    func customDeviceNameIsSyncedAndCanBeCleared() async throws {
+        let sync = StubDeviceSync()
+        let model = makeModel(sync: sync)
+        await model.unlock()
+        await waitUntil { model.devices.status == .synced }
+        #expect(sync.records["this-device"]?.name == "iPhone 16 Pro")
+
+        await model.setCustomDeviceName("  Test iPhone A  ")
+        #expect(model.settings.customDeviceName == "Test iPhone A")
+        #expect(model.ownDisplayName == "Test iPhone A")
+        #expect(sync.records["this-device"]?.name == "Test iPhone A")
+
+        await model.setCustomDeviceName(String(repeating: "x", count: 60))
+        #expect(model.settings.customDeviceName.count == AppModel.customDeviceNameLimit)
+
+        await model.setCustomDeviceName("   ")
+        #expect(model.settings.customDeviceName.isEmpty)
+        #expect(model.ownDisplayName == "iPhone 16 Pro")
+        #expect(sync.records["this-device"]?.name == "iPhone 16 Pro")
+    }
+
+    /// 同期をオフにしていれば、名前を変えてもレコードを書かない
+    @Test
+    func customDeviceNameIsNotUploadedWhenSyncIsOff() async {
+        let sync = StubDeviceSync()
+        let model = makeModel(sync: sync)
+        await model.unlock()
+        await waitUntil { model.devices.status == .synced }
+        await model.setSyncsThisDevice(false)
+
+        await model.setCustomDeviceName("Test iPhone A")
+
+        #expect(model.ownDisplayName == "Test iPhone A")
+        #expect(sync.records["this-device"] == nil)
+    }
+
     // MARK: - 状態
 
     @Test
