@@ -10,7 +10,7 @@
   ],
   "name": "IDFA Vault",
   "subtitle": "広告IDを生体認証で安全に確認",
-  "promotionalText": "広告識別子（IDFA）を、Face ID・Touch ID・Optic IDのロックの奥で確認して、すぐにコピー。同期するのは自分のiCloudだけです。",
+  "promotionalText": "広告識別子（IDFA）をFace ID・Touch ID・Optic IDのロックの奥で確認してすぐにコピー\n同期するのは自分のiCloudだけ",
   "whatsNew": {
     "version": "1.1.0",
     "text": "• コピーの形式を選べるようになりました（大文字・小文字、ハイフンあり・なし）。共有とQRコードにも使います\n• 前回見たときからIDFAが変わった端末をお知らせします。テスト端末の登録の更新忘れを防げます\n• iPhone・iPadに名前を付けて、同じ機種の端末を見分けられるようになりました\n• 使わなくなった端末をiCloudから1台ずつ削除できるようになりました。30日以上同期していない端末には印が付きます"
