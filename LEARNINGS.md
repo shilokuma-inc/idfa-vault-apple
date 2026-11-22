@@ -16,6 +16,7 @@
 ## 配布
 
 - 署名せずに作った archive を Export すると、archive の署名に無い entitlement（iCloud）は profile にあっても付かない。`Tools/embed_archive_entitlements.py` で archive の .app にアドホック署名で埋め込んでから Export する（ask-hub-apple の push と同じ。2026-11-10）
+- Upload のビルド番号は Xcode の自動採番（`manageAppVersionAndBuildNumber`）で、新しいバージョンでは `CURRENT_PROJECT_VERSION` から数え直す。iOS・visionOS はバージョンごとに 1 からでよいが、macOS はバージョンをまたいでも前のビルドより大きくないと `exportArchive This bundle is invalid. The value for key CFBundleVersion [1] ... must contain a higher version than that of the previously uploaded version [12]` で止まる。バージョンを上げるときは、`CURRENT_PROJECT_VERSION` を macOS の前のバージョンの最後のビルド番号より大きくする（2026-11-23、v1.1.0）
 - App ID の iCloud を有効にしただけで、コンテナを割り当てていないと、API Key の Export（`-allowProvisioningUpdates`）が `exportArchive Authentication failed` → `No profiles for '<Bundle ID>' were found` で止まる（entitlement の確認より手前）。コンテナの作成と割り当ては API に無いので Web で行う。割り当てた後は同じ鍵で iOS・macOS・visionOS とも通った（2026-11-10）
 - ASC API の Bundle ID は `platform: UNIVERSAL` で登録でき、その App ID で iOS（IPA）・macOS（pkg）・visionOS（IPA）の Export とアップロードが通った（2026-11-10）
 - Upload の `concurrency` がブランチごと（`github.ref`）だったころ、develop と `release/**` に続けてマージすると 2 本が同時に流れ、Xcode の自動採番（`manageAppVersionAndBuildNumber`）が同じビルド番号を選んで develop 側が失敗した。iOS はアップロードが重なって `exportArchive … The request cannot be fulfilled because of the state of the relationship 'buildUpload'`、visionOS は相手のアップロードが終わった 46 秒後に始めても `Redundant Binary Upload`（同じ build 16）。約 2 分あとだった macOS は通った。直前に上げたビルドはすぐには採番に数えられないので、排他にするだけでなく、同じプラットフォームのアップロードのあいだを空ける。そのため Upload はプラットフォームごとではなく run ごとに 1 本ずつ流す（2026-11-11、run 43040968977）
