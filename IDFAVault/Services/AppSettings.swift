@@ -2,7 +2,7 @@
 //  AppSettings.swift
 //  IDFAVault
 //
-//  設定（仕様書 3.5）。UserDefaults に保存する。「起動時に生体認証を要求」は固定でオンなので保存しない。
+//  設定（仕様書 3.5）とコピーの形式。UserDefaults に保存する。「起動時に生体認証を要求」は固定でオンなので保存しない。
 //
 
 import Foundation
@@ -18,6 +18,7 @@ final class AppSettings {
         static let hidesWhileCapturing = "settings.hidesWhileCapturing"
         static let masksOtherDevices = "settings.masksOtherDevices"
         static let syncsThisDevice = "settings.syncsThisDevice"
+        static let identifierFormat = "settings.identifierFormat"
     }
 
     /// 自動ロックのタイミング（初期値: すぐに）
@@ -40,6 +41,11 @@ final class AppSettings {
         didSet { defaults.set(syncsThisDevice, forKey: Key.syncsThisDevice) }
     }
 
+    /// コピー・共有・QR コードの IDFA の形式（初期値: 大文字・ハイフン付き）
+    var identifierFormat: IdentifierFormat {
+        didSet { defaults.set(identifierFormat.rawValue, forKey: Key.identifierFormat) }
+    }
+
     @ObservationIgnored private let defaults: UserDefaults
 
     init(defaults: UserDefaults) {
@@ -48,5 +54,6 @@ final class AppSettings {
         hidesWhileCapturing = defaults.object(forKey: Key.hidesWhileCapturing) as? Bool ?? true
         masksOtherDevices = defaults.object(forKey: Key.masksOtherDevices) as? Bool ?? true
         syncsThisDevice = defaults.object(forKey: Key.syncsThisDevice) as? Bool ?? true
+        identifierFormat = defaults.string(forKey: Key.identifierFormat).flatMap(IdentifierFormat.init(rawValue:)) ?? .uppercaseHyphenated
     }
 }

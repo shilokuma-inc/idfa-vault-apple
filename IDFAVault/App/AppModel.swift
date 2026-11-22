@@ -301,9 +301,14 @@ final class AppModel {
 
     // MARK: - コピー
 
-    /// IDFA を大文字・ハイフン付きでコピーする。60 秒後にクリップボードから消える
+    /// IDFA を設定の形式（既定は大文字・ハイフン付き）でコピーする。60 秒後にクリップボードから消える
     func copy(_ identifier: AdvertisingIdentifier) {
-        clipboard.copy(identifier.value, lifetime: Self.clipboardLifetime)
+        clipboard.copy(outputText(for: identifier), lifetime: Self.clipboardLifetime)
         copyCount += 1
+    }
+
+    /// コピー・共有・QR コードに使う、設定の形式の IDFA
+    func outputText(for identifier: AdvertisingIdentifier) -> String {
+        identifier.formatted(settings.identifierFormat)
     }
 }

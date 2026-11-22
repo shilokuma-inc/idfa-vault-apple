@@ -2,7 +2,7 @@
 //  SettingsView.swift
 //  IDFAVault
 //
-//  設定（デザインの Settings）。SECURITY / DISPLAY / ICLOUD の 3 グループ（仕様書 3.5）。
+//  設定（デザインの Settings）。SECURITY / DISPLAY / ICLOUD の 3 グループ（仕様書 3.5）。DISPLAY にはコピーの形式も置く。
 //
 
 import SwiftUI
@@ -89,6 +89,10 @@ struct SettingsForm: View {
                 .padding(.horizontal, 16)
                 .frame(minHeight: 54)
                 .accessibilityIdentifier("hidesWhileCapturing")
+
+                SettingsDivider()
+
+                copyFormatRow
             }
             .plateBackground(chamfer: 16)
 
@@ -193,6 +197,43 @@ struct SettingsForm: View {
         .menuStyle(.button)
         .buttonStyle(.plain)
         .accessibilityIdentifier("autoLock")
+    }
+
+    /// コピー・共有・QR コードの IDFA の形式。右に今の形式の短い例を出す
+    private var copyFormatRow: some View {
+        @Bindable var settings = model.settings
+        return Menu {
+            Picker(selection: $settings.identifierFormat) {
+                ForEach(IdentifierFormat.allCases) { format in
+                    Text(format.title)
+                        .tag(format)
+                }
+            } label: {
+                Text("Copy Format")
+            }
+            .pickerStyle(.inline)
+        } label: {
+            HStack(spacing: 8) {
+                SettingLabel(title: "Copy Format", detail: "Also used for sharing and QR codes")
+                Spacer(minLength: 8)
+                Text(verbatim: "\(model.settings.identifierFormat.sample)…")
+                    .font(.system(size: 14, design: .monospaced))
+                    .foregroundStyle(HeatTint.secondaryText)
+                    .lineLimit(1)
+                    .fixedSize()
+                    .accessibilityLabel(Text(model.settings.identifierFormat.title))
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(HeatTint.sectionHeader)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 11)
+            .frame(minHeight: 52)
+            .contentShape(Rectangle())
+        }
+        .menuStyle(.button)
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("copyFormat")
     }
 }
 

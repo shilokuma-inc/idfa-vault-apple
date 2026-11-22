@@ -246,7 +246,7 @@ private struct DetailIngot: View {
                     .font(.system(size: metrics.buttonFontSize, weight: .bold))
             }
             .buttonStyle(.metal(.primary, chamfer: 10, minHeight: metrics.buttonHeight, fillsWidth: false))
-            ShareLink(item: identifier.value) {
+            ShareLink(item: model.outputText(for: identifier)) {
                 Text("Share")
                     .font(.system(size: metrics.buttonFontSize, weight: .bold))
             }
