@@ -86,6 +86,12 @@ struct DeviceDetailView: View {
         ) { identifier in
             qrIdentifier = identifier
         }
+        if model.ownIdentifierChanged {
+            IdentifierChangeNotice {
+                model.acknowledgeIdentifierChange()
+            }
+            .frame(maxWidth: 560)
+        }
         if model.supportsOwnIdentifier, model.trackingStatus.isRefused {
             TrackingDeniedSection()
                 .frame(maxWidth: 560)
@@ -136,6 +142,12 @@ struct DeviceDetailView: View {
             onToggleMask: model.settings.masksOtherDevices ? { model.devices.toggleReveal(device) } : nil
         ) { identifier in
             qrIdentifier = identifier
+        }
+        if model.identifierChanged(device) {
+            IdentifierChangeNotice {
+                model.acknowledgeIdentifierChange(of: device)
+            }
+            .frame(maxWidth: 560)
         }
         InfoTiles(items: [
             (title: "OS", value: Text(verbatim: device.platform.rawValue)),
