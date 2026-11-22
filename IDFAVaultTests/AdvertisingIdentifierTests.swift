@@ -45,4 +45,16 @@ struct AdvertisingIdentifierTests {
         #expect(identifier.masked == "A1C4••••-••••-9F21")
         #expect(identifier.shortMasked == "A1C4••••-9F21")
     }
+
+    /// コピー・共有・QR コードの形式（大文字・小文字とハイフンの有無）
+    @Test(arguments: [
+        (IdentifierFormat.uppercaseHyphenated, "6D92078A-8246-4BA4-AE5B-76104861E7DC", "6D92078A-8246"),
+        (.lowercaseHyphenated, "6d92078a-8246-4ba4-ae5b-76104861e7dc", "6d92078a-8246"),
+        (.uppercaseCompact, "6D92078A82464BA4AE5B76104861E7DC", "6D92078A8246"),
+        (.lowercaseCompact, "6d92078a82464ba4ae5b76104861e7dc", "6d92078a8246")
+    ])
+    func formatsForOutput(format: IdentifierFormat, expected: String, sample: String) throws {
+        #expect(try #require(identifier).formatted(format) == expected)
+        #expect(format.sample == sample)
+    }
 }

@@ -204,6 +204,20 @@ struct AppModelTests {
         #expect(model.copyCount == 1)
     }
 
+    /// 設定のコピーの形式でコピーし、共有・QR コードにも同じ形式を使う
+    @Test
+    func copiesInTheSelectedFormat() async {
+        let clipboard = RecordingClipboard()
+        let model = makeModel(clipboard: clipboard)
+        await model.unlock()
+        model.settings.identifierFormat = .lowercaseCompact
+
+        model.copy(Self.identifier)
+
+        #expect(clipboard.copies.first?.text == "6d92078a82464ba4ae5b76104861e7dc")
+        #expect(model.outputText(for: Self.identifier) == "6d92078a82464ba4ae5b76104861e7dc")
+    }
+
     private func waitUntil(_ condition: () -> Bool) async {
         for _ in 0..<100 where !condition() {
             await Task.yield()
