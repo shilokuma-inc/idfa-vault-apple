@@ -18,12 +18,12 @@ To protect the identifiers, the app always asks for Touch ID (or the Mac's passw
 No login, account, credentials, or sample files are required.
 1. Launch the app and authenticate with Touch ID (or the password).
 2. The window shows "Not Available" for this Mac and explains that macOS doesn't provide the IDFA to Mac apps. No tracking prompt appears.
-3. To see IDFAs, open IDFA Vault on an iPhone or iPad signed in with the same Apple Account and allow tracking there. Its IDFA appears in the sidebar under "SAME APPLE ID" within about 20 seconds. Select it to see the details, then choose "Copy" (or press Command-C), "Share", or "QR Code".
-4. In Settings, change auto-lock, masking, and screen recording protection, or delete all synced data. The lock button next to the Settings button locks the app.
+3. To see IDFAs, open IDFA Vault on an iPhone or iPad signed in with the same Apple Account and allow tracking there. Its IDFA appears in the sidebar under "SAME APPLE ID" within about 20 seconds. Select it to see the details, then choose "Copy" (or press Command-C), "Share", or "QR Code". If its IDFA has changed since it was last shown, the app says so until it is copied or marked as checked. "Remove from iCloud" (also in the right-click menu) removes a device.
+4. In Settings, change auto-lock, masking, screen recording protection, and the copy format, or delete all synced data. The lock button next to the Settings button locks the app.
 5. The IDFA Vault item in the menu bar lists the same IDFAs, with a copy button for each.
 
 5. EXTERNAL SERVICES
-None other than Apple's CloudKit. The Mac version only reads the records that the user's iPhone and iPad saved to the user's own iCloud private database (an app-generated device UUID, the device model name, the platform, the IDFA, and the tracking permission status). It doesn't write a record for the Mac. The public and shared databases are not used.
+None other than Apple's CloudKit. The Mac version only reads the records that the user's iPhone and iPad saved to the user's own iCloud private database (an app-generated device UUID, the device name, the platform, the IDFA, and the tracking permission status). It doesn't write a record for the Mac. The public and shared databases are not used.
 
 6. REGIONAL DIFFERENCES
 None. The app's features and content are the same in all regions.

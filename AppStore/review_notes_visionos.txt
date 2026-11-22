@@ -9,7 +9,7 @@ The app has no account registration, login, user-generated content, paid content
 
 2. APP TRACKING TRANSPARENCY
 The visionOS version never shows the App Tracking Transparency prompt, at first launch or later, and doesn't track users. visionOS doesn't provide the IDFA to apps (the visionOS SDK has no AdSupport framework), so there is nothing to ask permission for. The visionOS binary doesn't link the AppTrackingTransparency or AdSupport frameworks, and its Info.plist has no NSUserTrackingUsageDescription.
-The prompt appears only in the iPhone and iPad versions, which read the IDFA of that device. App Privacy lists Device ID as used for tracking because App Privacy is shared by all platforms of the app and iOS requires the tracking permission to read the IDFA. The app never uses the IDFA for advertising or tracking.
+App Privacy lists Device ID as used for tracking because App Privacy is shared by all platforms of the app and iOS requires the tracking permission to read the IDFA. The app never uses the IDFA for advertising or tracking.
 
 3. PURPOSE AND TARGET AUDIENCE
 IDFA Vault shows advertising identifiers (IDFA) so that the user can copy them. It is for developers who register test devices in advertising SDKs, and for people who are asked for their IDFA by a carrier or a service. On Apple Vision Pro, it shows the IDFAs of the user's own iPhone and iPad.
@@ -20,11 +20,11 @@ To protect the identifiers, the app always asks for Optic ID (or the device pass
 No login, account, credentials, or sample files are required.
 1. Launch the app and authenticate with Optic ID (or the passcode).
 2. The window shows "Not Available" and explains that visionOS doesn't provide the IDFA to visionOS apps. No tracking prompt appears.
-3. To see IDFAs, open IDFA Vault on an iPhone or iPad signed in with the same Apple Account and allow tracking there. Its IDFA appears under "SAME APPLE ID" within about 20 seconds (to refresh sooner, pinch and drag the list down). Tap a row to show all digits, or use the buttons on the row to copy the IDFA or show it as a QR code.
-4. In Settings (the sliders button at the top right), change auto-lock, masking, and screen recording protection, or delete all synced data. The lock button next to it locks the app.
+3. To see IDFAs, open IDFA Vault on an iPhone or iPad signed in with the same Apple Account and allow tracking there. Its IDFA appears under "SAME APPLE ID" within about 20 seconds (to refresh sooner, pinch and drag the list down). Tap a row to show all digits, or use the buttons on the row to copy the IDFA or show it as a QR code. Long-press a row to remove the device from iCloud. A row also shows when its IDFA has changed.
+4. In Settings (the sliders button at the top right), change auto-lock, masking, screen recording protection, and the copy format, or delete all synced data. The lock button next to it locks the app.
 
 5. EXTERNAL SERVICES
-None other than Apple's CloudKit. The visionOS version only reads the records that the user's iPhone and iPad saved to the user's own iCloud private database (an app-generated device UUID, the device model name, the platform, the IDFA, and the tracking permission status). It doesn't write a record for Apple Vision Pro. The public and shared databases are not used.
+None other than Apple's CloudKit. The visionOS version only reads the records that the user's iPhone and iPad saved to the user's own iCloud private database (an app-generated device UUID, the device name, the platform, the IDFA, and the tracking permission status). It doesn't write a record for Apple Vision Pro. The public and shared databases are not used.
 
 6. REGIONAL DIFFERENCES
 None. The app's features and content are the same in all regions.
