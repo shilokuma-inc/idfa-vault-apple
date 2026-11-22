@@ -15,7 +15,7 @@ DEVELOPMENT_TEAM = XU74X3434S
 APP_BUNDLE_IDENTIFIER = jp.shilokuma.IDFAVault
 
 // バージョン（CFBundleShortVersionString / CFBundleVersion）
-MARKETING_VERSION = 1.0.0
+MARKETING_VERSION = 1.1.0
 CURRENT_PROJECT_VERSION = 1
 
 // 最低サポート OS（iOS と iPadOS・macOS・visionOS の 1 ターゲット）
