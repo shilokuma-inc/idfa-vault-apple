@@ -71,9 +71,10 @@ struct LastSyncedLabel: View {
     }
 }
 
-/// 他の端末の一覧の板
+/// 他の端末の一覧の板。長押しのメニューから、端末を iCloud から消せる
 struct DeviceListPlate: View {
     var devices: [DeviceRecord]
+    @State private var pendingDeletion: DeviceRecord?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -83,9 +84,17 @@ struct DeviceListPlate: View {
                         .padding(.horizontal, 16)
                 }
                 DeviceRow(device: device)
+                    // 長押しで持ち上げる形も角丸にしない
+                    .contextMenuPreviewShape(Rectangle())
+                    .contextMenu {
+                        RemoveDeviceMenuItem {
+                            pendingDeletion = device
+                        }
+                    }
             }
         }
         .plateBackground()
+        .confirmsDeviceDeletion($pendingDeletion)
     }
 }
 
@@ -104,6 +113,7 @@ struct DeviceRow: View {
                     VStack(alignment: .leading, spacing: 2) {
                         name
                         OtherDeviceIdentifier(identifier: identifier, isMasked: isMasked)
+                        staleLabel
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
@@ -128,6 +138,7 @@ struct DeviceRow: View {
                         .font(.footnote)
                         .foregroundStyle(HeatTint.warning)
                         .fixedSize(horizontal: false, vertical: true)
+                    staleLabel
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .accessibilityElement(children: .combine)
@@ -140,6 +151,13 @@ struct DeviceRow: View {
 
     private var isMasked: Bool {
         model.settings.masksOtherDevices && !model.devices.isRevealed(device)
+    }
+
+    @ViewBuilder private var staleLabel: some View {
+        if device.isStale(now: .now) {
+            StaleDeviceLabel()
+                .padding(.top, 2)
+        }
     }
 
     private var name: some View {

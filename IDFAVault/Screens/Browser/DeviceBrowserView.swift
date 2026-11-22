@@ -77,6 +77,8 @@ struct DeviceBrowserView: View {
     /// ユーザーが選んだ端末。まだ選んでいなければ nil（defaultSelection を使う）
     @State private var selection: DeviceSelection?
     @State private var showsSettings = ScreenshotDemo.scene == .settings
+    /// iCloud から消すかを確かめている端末
+    @State private var pendingDeletion: DeviceRecord?
     var metrics: BrowserMetrics = .current
 
     var body: some View {
@@ -84,9 +86,12 @@ struct DeviceBrowserView: View {
             DeviceSidebar(
                 selection: Binding(get: { resolvedSelection }, set: { selection = $0 }),
                 showsSettings: $showsSettings,
+                pendingDeletion: $pendingDeletion,
                 metrics: metrics
             )
-            DeviceDetailView(selection: resolvedSelection, metrics: metrics)
+            DeviceDetailView(selection: resolvedSelection, metrics: metrics) { device in
+                pendingDeletion = device
+            }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .padding(metrics.floatsSidebar ? EdgeInsets(top: 20, leading: 20, bottom: 20, trailing: 0) : EdgeInsets())
@@ -96,6 +101,7 @@ struct DeviceBrowserView: View {
         .sheet(isPresented: $showsSettings) {
             SettingsSheet()
         }
+        .confirmsDeviceDeletion($pendingDeletion)
     }
 
     /// 選んでいた端末が一覧から消えたら（すべて削除など）、最初に選ぶ端末に戻す
@@ -134,6 +140,7 @@ private struct DeviceSidebar: View {
     @Environment(AppModel.self) private var model
     @Binding var selection: DeviceSelection
     @Binding var showsSettings: Bool
+    @Binding var pendingDeletion: DeviceRecord?
     var metrics: BrowserMetrics
 
     var body: some View {
@@ -164,9 +171,16 @@ private struct DeviceSidebar: View {
                             symbolName: device.platform.kind.symbolName,
                             detail: device.identifier.map { .identifier($0.shortMasked) } ?? .notAllowed,
                             isSelected: selection == .other(device.id),
+                            isStale: device.isStale(now: .now),
                             metrics: metrics
                         ) {
                             selection = .other(device.id)
+                        }
+                        .contextMenuPreviewShape(ChamferedRect(chamfer: 12))
+                        .contextMenu {
+                            RemoveDeviceMenuItem {
+                                pendingDeletion = device
+                            }
                         }
                     }
                     if model.devices.otherDevices.isEmpty {
@@ -279,6 +293,8 @@ private struct SidebarRow: View {
     var symbolName: String
     var detail: Detail
     var isSelected: Bool
+    /// 長く同期していない端末か（右に印を出す）
+    var isStale = false
     var metrics: BrowserMetrics
     var action: () -> Void
 
@@ -295,6 +311,12 @@ private struct SidebarRow: View {
                         .lineLimit(1)
                 }
                 Spacer(minLength: 0)
+                if isStale {
+                    Image(systemName: "clock.badge.exclamationmark")
+                        .font(.system(size: metrics.rowTitleSize < 16 ? 12 : 14))
+                        .foregroundStyle(HeatTint.tertiaryText)
+                        .accessibilityLabel(Text("Not synced in over 30 days"))
+                }
             }
             .padding(.horizontal, metrics.iconSize > 32 ? 12 : 10)
             .padding(.vertical, metrics.iconSize > 32 ? 10 : 8)

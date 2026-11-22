@@ -12,6 +12,8 @@ struct DeviceDetailView: View {
     @Environment(AppModel.self) private var model
     var selection: DeviceSelection
     var metrics: BrowserMetrics
+    /// 他の端末を iCloud から消す（確認は DeviceBrowserView が出す）
+    var onDelete: (DeviceRecord) -> Void
     @State private var qrIdentifier: AdvertisingIdentifier?
 
     var body: some View {
@@ -140,6 +142,19 @@ struct DeviceDetailView: View {
             (title: "Last Synced", value: relativeText(device.updatedAt)),
             (title: "Tracking", value: Text(device.trackingStatus.allowsIdentifier ? "Allowed" : "Not Allowed"))
         ], metrics: metrics)
+        if device.isStale(now: .now) {
+            StaleDeviceLabel(font: metrics.buttonFontSize < 16 ? .caption : .footnote)
+        }
+        Button(role: .destructive) {
+            onDelete(device)
+        } label: {
+            Label("Remove from iCloud", systemImage: "trash")
+                .font(.system(size: metrics.buttonFontSize, weight: .semibold))
+                .foregroundStyle(HeatTint.destructive)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("removeDevice")
     }
 
     // MARK: - 部品
