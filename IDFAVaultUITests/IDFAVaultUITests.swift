@@ -86,6 +86,19 @@ final class IDFAVaultUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["A1C4••••-••••-9F21"].exists)
     }
 
+    /// 前に見たときから IDFA が変わっていたら知らせ、「確認済みにする」で消す
+    @MainActor
+    func testIdentifierChangeNoticeCanBeAcknowledged() throws {
+        let app = launch(tracking: "authorized", extraArguments: ["-ui-testing-identifier-changed"])
+
+        let notice = app.buttons["acknowledgeIdentifierChange"]
+        XCTAssertTrue(notice.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["IDFA changed"].exists, "他の端末の行にも印を出す")
+
+        notice.tap()
+        XCTAssertFalse(app.buttons["acknowledgeIdentifierChange"].waitForExistence(timeout: 2))
+    }
+
     /// iCloud にサインインしていなければ、サインインの案内を出す
     @MainActor
     func testSignedOutOfICloudShowsGuidance() throws {
@@ -95,12 +108,12 @@ final class IDFAVaultUITests: XCTestCase {
     }
 
     @MainActor
-    private func launch(tracking: String, iCloud: String = "devices") -> XCUIApplication {
+    private func launch(tracking: String, iCloud: String = "devices", extraArguments: [String] = []) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments += [
             "-ui-testing", "-ui-testing-tracking", tracking, "-ui-testing-icloud", iCloud,
             "-AppleLanguages", "(en)", "-AppleLocale", "en_US"
-        ]
+        ] + extraArguments
         app.launch()
         return app
     }

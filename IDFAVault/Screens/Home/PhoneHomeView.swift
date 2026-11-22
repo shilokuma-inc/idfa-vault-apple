@@ -18,6 +18,11 @@ struct PhoneHomeView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     header
                     OwnIdentifierCard()
+                    if model.ownIdentifierChanged {
+                        IdentifierChangeNotice {
+                            model.acknowledgeIdentifierChange()
+                        }
+                    }
                     if model.supportsOwnIdentifier, model.trackingStatus.isRefused {
                         TrackingDeniedSection()
                             .padding(.top, 8)

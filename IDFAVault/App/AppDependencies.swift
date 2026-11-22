@@ -71,6 +71,7 @@ struct AppDependencies {
         // デモの値なので、Mac のウインドウをスクリーンショットから外さない（iOS の撮影には効かないので設定のままにする）
         defaults.set(false, forKey: AppSettings.hidesWhileCapturingKey)
         #endif
+        UITesting.seedIdentifierChangesIfNeeded(arguments: ProcessInfo.processInfo.arguments, in: defaults)
         return AppDependencies(
             authenticator: StubAuthenticator(kind: .demo, outcome: scene == .lock ? .cancelled : .success),
             tracking: StubTrackingProvider(
@@ -103,6 +104,7 @@ struct AppDependencies {
             // Mac のウインドウをスクリーンショットに写すため、「画面収録・ミラーリング中は隠す」を切る
             defaults.set(false, forKey: AppSettings.hidesWhileCapturingKey)
         }
+        UITesting.seedIdentifierChangesIfNeeded(arguments: arguments, in: defaults)
         return AppDependencies(
             authenticator: StubAuthenticator(kind: biometry, outcome: outcome),
             tracking: StubTrackingProvider(
@@ -132,8 +134,16 @@ enum UITesting {
     static let iCloudArgument = "-ui-testing-icloud"
     /// 「画面収録・ミラーリング中は隠す」を切って起動する（Mac のスクリーンショット）
     static let allowsCaptureArgument = "-ui-testing-allows-capture"
+    /// この端末と iPhone 15（デモ）の IDFA が、前に見たときから変わった状態で起動する（UI テスト・PR のスクリーンショット）
+    static let identifierChangedArgument = "-ui-testing-identifier-changed"
     // swiftlint:disable:next force_unwrapping
     static let sampleIdentifier = AdvertisingIdentifier("6D92078A-8246-4BA4-AE5B-76104861E7DC")!
+
+    static func seedIdentifierChangesIfNeeded(arguments: [String], in defaults: UserDefaults) {
+        if arguments.contains(identifierChangedArgument) {
+            IdentifierChangeTracker.seedChanged(deviceIDs: [StubDeviceInfo().deviceID, "demo-iphone-15"], in: defaults)
+        }
+    }
 
     static func value(after argument: String, in arguments: [String]) -> String? {
         guard let index = arguments.firstIndex(of: argument), arguments.indices.contains(index + 1) else {

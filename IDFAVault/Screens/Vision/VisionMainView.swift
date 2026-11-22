@@ -133,6 +133,11 @@ struct VisionMainView: View {
                     }
                     .contextMenuPreviewShape(ChamferedRect(chamfer: 14))
                     .contextMenu {
+                        if model.identifierChanged(device) {
+                            AcknowledgeChangeMenuItem {
+                                model.acknowledgeIdentifierChange(of: device)
+                            }
+                        }
                         RemoveDeviceMenuItem {
                             pendingDeletion = device
                         }
@@ -169,6 +174,10 @@ private struct VisionDeviceCard: View {
                             .font(.footnote)
                             .foregroundStyle(HeatTint.warning)
                             .fixedSize(horizontal: false, vertical: true)
+                    }
+                    if model.identifierChanged(device) {
+                        IdentifierChangedLabel()
+                            .padding(.top, 2)
                     }
                     if device.isStale(now: .now) {
                         StaleDeviceLabel()

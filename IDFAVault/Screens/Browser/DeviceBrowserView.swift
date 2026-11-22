@@ -157,6 +157,7 @@ private struct DeviceSidebar: View {
                 symbolName: DeviceKind.current.symbolName,
                 detail: ownDetail,
                 isSelected: selection == .own,
+                isChanged: model.ownIdentifierChanged,
                 metrics: metrics
             ) {
                 selection = .own
@@ -171,6 +172,7 @@ private struct DeviceSidebar: View {
                             symbolName: device.platform.kind.symbolName,
                             detail: device.identifier.map { .identifier($0.shortMasked) } ?? .notAllowed,
                             isSelected: selection == .other(device.id),
+                            isChanged: model.identifierChanged(device),
                             isStale: device.isStale(now: .now),
                             metrics: metrics
                         ) {
@@ -178,6 +180,11 @@ private struct DeviceSidebar: View {
                         }
                         .contextMenuPreviewShape(ChamferedRect(chamfer: 12))
                         .contextMenu {
+                            if model.identifierChanged(device) {
+                                AcknowledgeChangeMenuItem {
+                                    model.acknowledgeIdentifierChange(of: device)
+                                }
+                            }
                             RemoveDeviceMenuItem {
                                 pendingDeletion = device
                             }
@@ -293,6 +300,8 @@ private struct SidebarRow: View {
     var symbolName: String
     var detail: Detail
     var isSelected: Bool
+    /// 前に見たときから IDFA が変わったか（右に印を出す）
+    var isChanged = false
     /// 長く同期していない端末か（右に印を出す）
     var isStale = false
     var metrics: BrowserMetrics
@@ -311,6 +320,12 @@ private struct SidebarRow: View {
                         .lineLimit(1)
                 }
                 Spacer(minLength: 0)
+                if isChanged {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .font(.system(size: metrics.rowTitleSize < 16 ? 12 : 14, weight: .semibold))
+                        .foregroundStyle(HeatTint.warning)
+                        .accessibilityLabel(Text("IDFA changed"))
+                }
                 if isStale {
                     Image(systemName: "clock.badge.exclamationmark")
                         .font(.system(size: metrics.rowTitleSize < 16 ? 12 : 14))

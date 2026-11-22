@@ -73,6 +73,7 @@ struct LastSyncedLabel: View {
 
 /// 他の端末の一覧の板。長押しのメニューから、端末を iCloud から消せる
 struct DeviceListPlate: View {
+    @Environment(AppModel.self) private var model
     var devices: [DeviceRecord]
     @State private var pendingDeletion: DeviceRecord?
 
@@ -87,6 +88,11 @@ struct DeviceListPlate: View {
                     // 長押しで持ち上げる形も角丸にしない
                     .contextMenuPreviewShape(Rectangle())
                     .contextMenu {
+                        if model.identifierChanged(device) {
+                            AcknowledgeChangeMenuItem {
+                                model.acknowledgeIdentifierChange(of: device)
+                            }
+                        }
                         RemoveDeviceMenuItem {
                             pendingDeletion = device
                         }
@@ -113,6 +119,10 @@ struct DeviceRow: View {
                     VStack(alignment: .leading, spacing: 2) {
                         name
                         OtherDeviceIdentifier(identifier: identifier, isMasked: isMasked)
+                        if model.identifierChanged(device) {
+                            IdentifierChangedLabel()
+                                .padding(.top, 2)
+                        }
                         staleLabel
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
