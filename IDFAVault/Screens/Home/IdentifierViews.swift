@@ -163,14 +163,15 @@ struct CopyButton: View {
     }
 }
 
-/// IDFA の文字列を共有する副ボタン
+/// IDFA の文字列を（設定の形式で）共有する副ボタン
 struct ShareIdentifierButton: View {
+    @Environment(AppModel.self) private var model
     var identifier: AdvertisingIdentifier
     var minHeight: CGFloat = 47
     var fillsWidth = true
 
     var body: some View {
-        ShareLink(item: identifier.value) {
+        ShareLink(item: model.outputText(for: identifier)) {
             FittingButtonLabel(title: "Share", systemImage: "square.and.arrow.up")
                 .font(.system(size: 16, weight: .bold))
         }

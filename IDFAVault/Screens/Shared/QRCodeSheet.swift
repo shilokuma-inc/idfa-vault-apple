@@ -2,7 +2,7 @@
 //  QRCodeSheet.swift
 //  IDFAVault
 //
-//  IDFA の QR コード（仕様書 3.3。iPad・Mac・visionOS）。CoreImage の qrCodeGenerator で作る。
+//  IDFA の QR コード（仕様書 3.3。iPad・Mac・visionOS）。CoreImage の qrCodeGenerator で作る。値は設定のコピーの形式にする。
 //
 
 import CoreImage
@@ -24,6 +24,7 @@ enum QRCode {
 
 /// 端末の IDFA の QR コードを出すシート
 struct QRCodeSheet: View {
+    @Environment(AppModel.self) private var model
     var identifier: AdvertisingIdentifier
     var deviceName: String
     @Environment(\.dismiss) private var dismiss
@@ -33,7 +34,7 @@ struct QRCodeSheet: View {
             Text(verbatim: deviceName)
                 .font(.system(size: 22, weight: .heavy))
                 .headingMetal()
-            if let image = QRCode.image(for: identifier.value) {
+            if let image = QRCode.image(for: model.outputText(for: identifier)) {
                 Image(decorative: image, scale: 1)
                     .interpolation(.none)
                     .resizable()
@@ -45,7 +46,8 @@ struct QRCodeSheet: View {
                     .ingotBackground(chamfer: 24, rimWidth: 8)
                     .accessibilityLabel(Text("QR code of the IDFA"))
             }
-            Text(verbatim: identifier.value)
+            // QR コードに入れた値（設定の形式）をそのまま出す
+            Text(verbatim: model.outputText(for: identifier))
                 .font(.system(size: 15, weight: .bold, design: .monospaced))
                 .identifierMetal()
                 .lineLimit(1)
