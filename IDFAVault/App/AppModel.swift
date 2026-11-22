@@ -63,7 +63,11 @@ final class AppModel {
         trackingPromptDelay = dependencies.trackingPromptDelay
         deviceInfo = dependencies.deviceInfo
         syncRefreshInterval = dependencies.syncRefreshInterval
-        devices = DeviceSyncModel(service: dependencies.sync, ownDeviceID: dependencies.deviceInfo.deviceID)
+        devices = DeviceSyncModel(
+            service: dependencies.sync,
+            ownDeviceID: dependencies.deviceInfo.deviceID,
+            changes: IdentifierChangeTracker(defaults: dependencies.defaults)
+        )
         isLocked = !dependencies.startsUnlocked
         biometry = dependencies.authenticator.biometryKind()
         supportsOwnIdentifier = dependencies.tracking.supportsAdvertisingIdentifier
@@ -229,6 +233,7 @@ final class AppModel {
         }
         let identifier = tracking.advertisingIdentifier()
         ownIdentifier = identifier.isZero ? nil : identifier
+        devices.changes.observe(deviceID: deviceInfo.deviceID, identifier: ownIdentifier)
     }
 
     // MARK: - iCloud の同期
@@ -306,10 +311,34 @@ final class AppModel {
 
     // MARK: - コピー
 
-    /// IDFA を設定の形式（既定は大文字・ハイフン付き）でコピーする。60 秒後にクリップボードから消える
+    /// IDFA を設定の形式（既定は大文字・ハイフン付き）でコピーする。60 秒後にクリップボードから消える。
+    /// コピーしたら、その IDFA の端末の「変わりました」は確認したことにする（登録し直すためにコピーするので）
     func copy(_ identifier: AdvertisingIdentifier) {
         clipboard.copy(outputText(for: identifier), lifetime: Self.clipboardLifetime)
         copyCount += 1
+        if identifier == ownIdentifier {
+            devices.changes.acknowledge(deviceID: deviceInfo.deviceID)
+        }
+        for device in devices.otherDevices where device.identifier == identifier {
+            devices.changes.acknowledge(deviceID: device.id)
+        }
+    }
+
+    // MARK: - IDFA の変化
+
+    /// この端末の IDFA が、前に見たときから変わったか
+    var ownIdentifierChanged: Bool {
+        supportsOwnIdentifier && ownIdentifier != nil && devices.changes.hasChanged(deviceID: deviceInfo.deviceID)
+    }
+
+    /// 他の端末の IDFA が、前に見たときから変わったか
+    func identifierChanged(_ device: DeviceRecord) -> Bool {
+        device.identifier != nil && devices.changes.hasChanged(deviceID: device.id)
+    }
+
+    /// 「変わりました」を確認済みにする。device が nil ならこの端末
+    func acknowledgeIdentifierChange(of device: DeviceRecord? = nil) {
+        devices.changes.acknowledge(deviceID: device?.id ?? deviceInfo.deviceID)
     }
 
     /// コピー・共有・QR コードに使う、設定の形式の IDFA

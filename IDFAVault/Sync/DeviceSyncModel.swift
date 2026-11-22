@@ -31,6 +31,9 @@ final class DeviceSyncModel {
     /// 全桁を出している端末（伏せ字にしているときに、タップした端末）
     private(set) var revealedDeviceIDs: Set<String> = []
 
+    /// 前に見たときから IDFA が変わった端末
+    let changes: IdentifierChangeTracker
+
     @ObservationIgnored private let service: any DeviceSyncing
     @ObservationIgnored private let ownDeviceID: String
     @ObservationIgnored private let now: () -> Date
@@ -38,9 +41,15 @@ final class DeviceSyncModel {
     @ObservationIgnored private var pendingUpload: DeviceRecord?
     @ObservationIgnored private var needsAnotherRefresh = false
 
-    init(service: any DeviceSyncing, ownDeviceID: String, now: @escaping () -> Date = Date.init) {
+    init(
+        service: any DeviceSyncing,
+        ownDeviceID: String,
+        changes: IdentifierChangeTracker,
+        now: @escaping () -> Date = Date.init
+    ) {
         self.service = service
         self.ownDeviceID = ownDeviceID
+        self.changes = changes
         self.now = now
     }
 
@@ -86,6 +95,9 @@ final class DeviceSyncModel {
             otherDevices = records
                 .filter { $0.id != ownDeviceID && $0.platform.providesAdvertisingIdentifier }
                 .sorted { $0.updatedAt > $1.updatedAt }
+            for device in otherDevices {
+                changes.observe(deviceID: device.id, identifier: device.identifier)
+            }
             lastSyncedAt = now()
             status = .synced
         } catch {
@@ -105,6 +117,7 @@ final class DeviceSyncModel {
             try await service.delete(deviceID: device.id)
             otherDevices.removeAll { $0.id == device.id }
             revealedDeviceIDs.remove(device.id)
+            changes.forget(deviceID: device.id)
             return true
         } catch {
             return false
