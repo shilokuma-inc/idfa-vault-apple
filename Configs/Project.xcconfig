@@ -16,7 +16,10 @@ APP_BUNDLE_IDENTIFIER = jp.shilokuma.IDFAVault
 
 // バージョン（CFBundleShortVersionString / CFBundleVersion）
 MARKETING_VERSION = 1.1.0
-CURRENT_PROJECT_VERSION = 1
+// ビルド番号の起点。Upload は Xcode の自動採番で、新しいバージョンではこの値から数え直す。
+// macOS はバージョンをまたいでも前のビルドより大きくしないとアップロードできないので、
+// macOS の前のバージョンの最後のビルド番号より大きくしておく（1.0.0 の macOS は 12 まで）
+CURRENT_PROJECT_VERSION = 13
 
 // 最低サポート OS（iOS と iPadOS・macOS・visionOS の 1 ターゲット）
 IPHONEOS_DEPLOYMENT_TARGET = 17.0
