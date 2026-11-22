@@ -38,7 +38,7 @@ final class AppModel {
     var isCapturingScreen = false
     /// コピーした回数。触覚フィードバックと「コピーしました」の表示のきっかけに使う
     private(set) var copyCount = 0
-    /// この端末の表示名（iOS はモデル名、Mac はコンピュータ名）。読み終わるまでは nil
+    /// この端末の機種の名前（iOS はモデル名、Mac はコンピュータ名）。読み終わるまでは nil
     private(set) var ownDeviceName: String?
 
     @ObservationIgnored private let authenticator: any Authenticating
@@ -86,6 +86,15 @@ final class AppModel {
     }
 
     // MARK: - 表示
+
+    /// この端末に付けられる名前の最大の文字数
+    static let customDeviceNameLimit = 40
+
+    /// 画面と同期に使う、この端末の名前。設定で名前を付けていればそれ、無ければ機種の名前
+    var ownDisplayName: String? {
+        let custom = settings.customDeviceName
+        return custom.isEmpty ? ownDeviceName : custom
+    }
 
     /// 画面に出す IDFA。取得できないときは全桁 0
     var displayedIdentifier: AdvertisingIdentifier {
@@ -265,6 +274,19 @@ final class AppModel {
         await devices.deleteDevice(device)
     }
 
+    /// この端末に名前を付ける。前後の空白を除き、長ければ切る。空なら機種の名前に戻す。
+    /// 同期をオンにしていれば、レコードを書き直して他の端末の一覧に反映する
+    func setCustomDeviceName(_ name: String) async {
+        let normalized = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(Self.customDeviceNameLimit))
+        guard normalized != settings.customDeviceName else {
+            return
+        }
+        settings.customDeviceName = normalized
+        if let record = await ownRecord() {
+            await devices.refresh(uploading: record)
+        }
+    }
+
     /// 自分の Apple ID のレコードをすべて消す。同期をオンにしている端末は、次に開いたときに書き直す
     func deleteAllSyncedData() async -> Bool {
         await devices.deleteAll()
@@ -278,7 +300,7 @@ final class AppModel {
         await loadOwnDeviceName()
         return DeviceRecord(
             id: deviceInfo.deviceID,
-            name: ownDeviceName ?? "",
+            name: ownDisplayName ?? "",
             platform: deviceInfo.platform,
             identifier: ownIdentifier,
             trackingStatus: trackingStatus,

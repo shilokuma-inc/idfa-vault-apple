@@ -153,7 +153,7 @@ private struct DeviceSidebar: View {
             }
             SidebarLabel(title: DeviceKind.current == .mac ? "THIS MAC" : "THIS DEVICE", metrics: metrics)
             SidebarRow(
-                title: model.ownDeviceName ?? "",
+                title: model.ownDisplayName ?? "",
                 symbolName: DeviceKind.current.symbolName,
                 detail: ownDetail,
                 isSelected: selection == .own,
