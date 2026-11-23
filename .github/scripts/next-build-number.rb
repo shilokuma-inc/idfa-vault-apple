@@ -64,8 +64,9 @@ end
 
 bundle_id = AppStoreConnect.env!('BUNDLE_ID')
 minimum_text = ENV.fetch('MINIMUM_BUILD_NUMBER', '')
-minimum = minimum_text.empty? ? 1 : leading_integer(minimum_text)
-abort "::error::MINIMUM_BUILD_NUMBER は整数にしてください（#{minimum_text}）" if minimum.nil?
+# 下限は値全体が整数のときだけ受け入れる（"20.5" や "20abc" を 20 に切り捨てない）
+abort "::error::MINIMUM_BUILD_NUMBER は整数にしてください（#{minimum_text}）" unless minimum_text.empty? || minimum_text.match?(/\A[0-9]+\z/)
+minimum = minimum_text.empty? ? 1 : minimum_text.to_i
 token = AppStoreConnect.token_from_env
 
 begin
