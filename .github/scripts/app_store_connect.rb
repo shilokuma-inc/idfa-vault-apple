@@ -81,6 +81,25 @@ module AppStoreConnect
     response.body.to_s.empty? ? nil : JSON.parse(response.body)
   end
 
+  # 一覧の API を links.next をたどって最後まで読み、data と included をそれぞれつなげて返す
+  def get_all(path, token:, query: nil)
+    data = []
+    included = []
+    loop do
+      json = request(:get, path, token: token, query: query)
+      data.concat(json.fetch('data'))
+      included.concat(json.fetch('included', []))
+      next_url = json.dig('links', 'next')
+      break if next_url.nil?
+
+      # next は BASE_URL から始まる完全な URL。request に渡せるよう path と query に分ける
+      uri = URI(next_url)
+      path = uri.path
+      query = URI.decode_www_form(uri.query.to_s)
+    end
+    { 'data' => data, 'included' => included }
+  end
+
   # Bundle ID が一致するアプリを返す（無ければ nil）
   def find_app(bundle_id:, token:)
     json = request(:get, '/v1/apps', token: token,

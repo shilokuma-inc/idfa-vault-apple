@@ -22,6 +22,10 @@ on:
         description: Export したもの（IPA / pkg）を App Store Connect へアップロードするか
         type: boolean
         default: false
+      build-number:
+        description: archive のビルド番号（CURRENT_PROJECT_VERSION を上書きする）。空なら Configs/Project.xcconfig の値。upload のときは必須（upload.yml の build-number ジョブが決める）
+        type: string
+        default: ''
     secrets:
       EXPORT_OPTIONS:
         description: ExportOptions.plist の内容（destination と、アップロード時の manageAppVersionAndBuildNumber はワークフロー側で上書きする）
@@ -171,7 +175,23 @@ jobs:
       - name: Archive
         env:
           PLATFORM: ${{ inputs.platform }}
+          UPLOAD: ${{ inputs.upload }}
+          BUILD_NUMBER: ${{ inputs.build-number }}
         run: |
+          # ビルド番号を渡されたら CURRENT_PROJECT_VERSION を上書きする。アップロードで渡されないと xcconfig の番号になり、
+          # バージョンを上げたときに macOS が「前のビルドより大きくない」で止まるので、ここで止める
+          build_settings=()
+          if [ -n "$BUILD_NUMBER" ]; then
+            if ! [[ "$BUILD_NUMBER" =~ ^[0-9]+$ ]]; then
+              echo "::error::build-number は整数にしてください（${BUILD_NUMBER}）"
+              exit 1
+            fi
+            build_settings+=("CURRENT_PROJECT_VERSION=$BUILD_NUMBER")
+            echo "ビルド番号: $BUILD_NUMBER"
+          elif [ "$UPLOAD" = true ]; then
+            echo "::error::アップロードするときは build-number を渡してください（upload.yml の build-number ジョブ）"
+            exit 1
+          fi
           if [ "$PLATFORM" = macOS ]; then
             # macOS はアドホック署名でアーカイブする。CODE_SIGNING_ALLOWED=NO だと App Sandbox などのエンタイトルメント
             # （ENABLE_APP_SANDBOX から作られる）が実行ファイルに埋め込まれず、Export で配布用に署名し直しても sandbox の無いアプリになる
@@ -186,7 +206,8 @@ jobs:
               CODE_SIGN_IDENTITY=- \
               CODE_SIGN_STYLE=Manual \
               PROVISIONING_PROFILE_SPECIFIER= \
-              IDFAVAULT_ADHOC_SIGNING=YES
+              IDFAVAULT_ADHOC_SIGNING=YES \
+              ${build_settings[@]+"${build_settings[@]}"}
           else
             # iOS・visionOS は署名せずにアーカイブする。entitlement（iCloud）は次の手順で埋め込む
             xcodebuild archive \
@@ -195,7 +216,8 @@ jobs:
               -sdk "$SDK" \
               -configuration Release \
               -archivePath "$RUNNER_TEMP/build.xcarchive" \
-              CODE_SIGNING_ALLOWED=NO
+              CODE_SIGNING_ALLOWED=NO \
+              ${build_settings[@]+"${build_settings[@]}"}
           fi
 
       - name: Fix signatures of stub frameworks
@@ -319,8 +341,9 @@ jobs:
             ruby .github/scripts/ensure-internal-testers.rb
 
       - name: Upload to App Store Connect
-        # ビルド番号は Xcode に採番させる（manageAppVersionAndBuildNumber）。App Store Connect 上の最新ビルド番号を見て
-        # 自動で増やすので、xcconfig の CURRENT_PROJECT_VERSION を手で上げる必要はない（プラットフォームごとに別々に数える）。
+        # archive のビルド番号は upload.yml の build-number ジョブが決めた値（全プラットフォームの最大値 + 1）。
+        # Xcode の採番（manageAppVersionAndBuildNumber）も残し、同じバージョンに前のビルドがあればそれより大きくさせる。
+        # どちらも App Store Connect を見て決まるので、xcconfig の CURRENT_PROJECT_VERSION を手で上げる必要はない。
         # org 共有の EXPORT_OPTIONS Secret は他リポジトリでも使うため書き換えず、ランナー上のコピーだけを上書きする
         if: ${{ inputs.upload }}
         env:

@@ -70,7 +70,7 @@
 |---|---|
 | `DEVELOPMENT_TEAM` | Apple Developer Program の Team ID |
 | `APP_BUNDLE_IDENTIFIER` | アプリ本体の Bundle Identifier。テストターゲットは `.Tests` / `.UITests` を付けて自動で派生します |
-| `MARKETING_VERSION` | アプリのバージョン。ビルド番号（`CURRENT_PROJECT_VERSION`）は Upload のときに App Store Connect の最新ビルドを見て Xcode が自動で増やすため、手で上げる必要はありません |
+| `MARKETING_VERSION` | アプリのバージョン。ビルド番号（`CURRENT_PROJECT_VERSION`）は Upload が App Store Connect の全ビルドを見て決めるため、手で上げる必要はありません（「ブランチ運用と CI」）。`CURRENT_PROJECT_VERSION` は Upload のビルド番号の下限になります |
 | `IPHONEOS_DEPLOYMENT_TARGET` / `MACOSX_DEPLOYMENT_TARGET` / `XROS_DEPLOYMENT_TARGET` | 最低サポート OS（iOS・iPadOS / macOS / visionOS） |
 
 ### 4. GitHub Secrets を設定する
@@ -148,7 +148,8 @@ Upload ワークフローは、アップロードの前に TestFlight の内部�
 - Archive / Upload は iOS → macOS → visionOS の順に 1 つずつ流します（macOS ランナーの同時実行枠を 1 つしか使わないため）。iOS・visionOS は IPA、macOS は pkg を Export します。前のプラットフォームが失敗しても次は流します
 - `main` への push では Build だけを実行します。`main` には `develop` / `release/**` で Upload（Archive を含む）を通したものがマージされるためです
 - Archive（Export まで。アップロードはしない）は手動実行だけです。Actions タブの Run workflow から、確かめたいブランチを選んで実行します
-- Upload はブランチをまたいで 1 本ずつ流します。`develop` と `release/**` に続けてマージしても、後の Upload は先の Upload が終わってから始まります。ビルド番号は Xcode が App Store Connect の最新ビルドを見て決めるため、並べて流すと同じ番号を選び、片方のアップロードが失敗します
+- Upload はブランチをまたいで 1 本ずつ流します。`develop` と `release/**` に続けてマージしても、後の Upload は先の Upload が終わってから始まります。ビルド番号は App Store Connect の最新ビルドを見て決めるため、並べて流すと同じ番号を選び、片方のアップロードが失敗します
+- Upload のビルド番号は、最初のジョブ（`build-number`）が App Store Connect の全ビルド（iOS・macOS・visionOS の全バージョン）のいちばん大きい番号に 1 を足して決め、3 つのプラットフォームの archive に同じ番号を使います（[.github/scripts/next-build-number.rb](.github/scripts/next-build-number.rb)。決めた番号は Job Summary に出ます）。macOS はバージョンをまたいでも前のビルドより大きくないとアップロードできないため、バージョンを上げても止まらないようにしています。番号を手で飛ばしたいときは `Configs/Project.xcconfig` の `CURRENT_PROJECT_VERSION` を上げます（その値より小さくはしません）
 - 順番を待っている Upload（状態は pending）は取り消さず、待ち始めた順に流します。同じブランチに続けて push したときも、push ごとに上げます（待てるのは 100 本まで）
 - Upload も手動で実行できます。作業ブランチを TestFlight で確認したいときは、Upload を手動実行してそのブランチを選びます
 - リポジトリ変数（Settings → Secrets and variables → Actions → Variables）に `ENABLE_DELIVERY=false` を設定すると Upload をスキップします（Archive は App Store Connect にアプリが無くても通るため止めません）。テンプレートリポジトリ自身はこの設定でアップロードを止めています。テンプレートから作成したリポジトリには引き継がれないため、何もしなければ従来どおり実行されます
@@ -319,7 +320,7 @@ visionOS だけ別のアイコン（`AppIcon-Vision`）を使うよう、`ASSETC
 └── .github/
     ├── ISSUE_TEMPLATE/      # Issue テンプレート
     ├── pull_request_template.md
-    ├── scripts/             # check-app-store-app.rb / check-app-store-platform.rb（App Store Connect のアプリ・プラットフォームの有無を確認）
+    ├── scripts/             # check-app-store-app.rb / check-app-store-platform.rb（App Store Connect のアプリ・プラットフォームの有無を確認）・next-build-number.rb（Upload のビルド番号を決める）
     └── workflows/
         ├── _build.yml       # 共通処理: ビルド + テスト + SwiftLint（iOS・macOS・visionOS。workflow_call）
         ├── _archive.yml     # 共通処理: Archive → Export（→ Upload）（1 回で 1 プラットフォーム。workflow_call）
