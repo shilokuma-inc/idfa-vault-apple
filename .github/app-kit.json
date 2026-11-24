@@ -1,0 +1,8 @@
+{
+  "v": 1,
+  "project": "IDFAVault.xcodeproj",
+  "scheme": "IDFAVault",
+  "platforms": ["iOS", "macOS", "visionOS"],
+  "uiTests": "IDFAVaultUITests",
+  "archive": { "platforms": ["iOS", "macOS", "visionOS"] }
+}
